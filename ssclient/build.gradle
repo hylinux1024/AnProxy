@@ -1,0 +1,37 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 27
+
+
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0"
+
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+ext {
+    scastleVersion = '1.53.0.0'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "com.madgag.spongycastle:core:${scastleVersion}"// for SHA3 and SECP256K1
+    implementation "com.madgag.spongycastle:prov:${scastleVersion}"// for SHA3 and SECP256K1
+    implementation 'com.alibaba:fastjson:1.1.70.android'
+
+}
