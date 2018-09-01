@@ -1,15 +1,14 @@
-package com.github.ss.client;
+package com.stfl;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.Process;
 import android.text.TextUtils;
 
-import com.github.ss.utils.AppUtils;
-import com.github.ss.utils.Config;
+import com.stfl.network.NioLocalServer;
 
-import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 
@@ -18,11 +17,9 @@ public class SSClientService extends Service {
     private static final Logger logger = Logger.getLogger("SSClientService");
 
     private static final String TAG = SSClientService.class.getSimpleName();
-    private NioLocalClient localClient;
-    private Config config;
 
-    public static String localAddress = "127.0.0.1";
-    public static int localPort = 9999;
+    private String localAddress = "127.0.0.1";
+    private int localPort = 9898;
 
     public static final String METHOD = "method";
     public static final String PASSWORD = "password";
@@ -30,11 +27,13 @@ public class SSClientService extends Service {
     public static final String SERVER_PORT = "server_port";
 
     private String method = "aes-256-cfb";
-    private String password = "tbox888666";
-    private String server = "52.199.25.74";
-    private int serverPort = 9001;
+    private String password = "u1rRWTssNv0p";
+    private String server = "198.199.101.152";
+    private int serverPort = 8388;
 
-    private Thread task;
+    private boolean started = false;
+
+    private ExecutorService pool = Executors.newFixedThreadPool(1);
 
     public SSClientService() {
         super();
@@ -43,7 +42,6 @@ public class SSClientService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-//        setupConfig();
     }
 
     @Override
@@ -54,47 +52,35 @@ public class SSClientService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         getDataFromIntent(intent);
-        setupConfig();
         runOnBackend();
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
 
     protected void runOnBackend() {
-        if (task != null) {
-            task.interrupt();
-            task = null;
-            logger.info("Reset SSClient to new server:" + server);
+        if (started) {
+            pool.shutdown();
+            logger.info("SSClient is reset " + server);
+            return;
         }
+        try {
+            com.stfl.misc.Config conf = new com.stfl.misc.Config(server, serverPort, localAddress, localPort, method, password);
+            NioLocalServer server = new NioLocalServer(conf);
+            pool.execute(server);
+            started = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        logger.info("SSClient is running " + server);
 
-        task = new Thread() {
-            @Override
-            public void run() {
-                if (localClient != null) {
-                    localClient.startClient(config);
-                }
-            }
-        };
-        task.start();
-        logger.info("SSClient is running ：" + server);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        started = false;
         logger.info("SSClient is stop!");
-        if (localClient != null) {
-            localClient.stopLocalClient();
-            localClient = null;
-        }
-        if (task != null) {
-            task.interrupt();
-            task = null;
-        }
-//        if (!AppUtils.isMainProcess(this)) {
-//            Process.killProcess(Process.myPid());
-//        }
-
+        pool.shutdown();
     }
 
     private void getDataFromIntent(Intent intent) {
@@ -119,15 +105,4 @@ public class SSClientService extends Service {
         }
     }
 
-    private void setupConfig() {
-        localClient = new NioLocalClient();
-        config = new Config();
-        config.setClientListenIp(localAddress);
-        config.setClientListenPort(localPort);
-
-        config.setEncryptMethod(method);
-        config.setEncryptPassword(password);
-        config.setProxyServerIp(server);
-        config.setProxyServerPort(serverPort);
-    }
 }

@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.github.ss.client.SSClientService"
+        <service android:name="com.stfl.SSClientService"
             android:process=":SService">
             <intent-filter>
                 <action android:name="com.github.ss.client.SSClientService" />

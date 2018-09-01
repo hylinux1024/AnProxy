@@ -53,8 +53,7 @@ public class NioLocalClient {
                         continue;
                     }
                     if (key.isAcceptable()) {
-                        ServerSocketChannel serverSocket = (ServerSocketChannel) key
-                                .channel();
+                        ServerSocketChannel serverSocket = (ServerSocketChannel) key.channel();
                         SocketChannel socketChannel = serverSocket.accept();
                         handlerList.add(new ClientChannelHandler(selector,
                                 socketChannel, config));
@@ -97,7 +96,9 @@ public class NioLocalClient {
         stop = true;
         if (serverSocketChannel != null) {
             try {
+                serverSocketChannel.socket().close();
                 serverSocketChannel.close();
+                serverSocketChannel = null;
             } catch (IOException e) {
                 e.printStackTrace();
             }
